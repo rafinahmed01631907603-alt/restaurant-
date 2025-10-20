@@ -1,0 +1,19 @@
+body {
+  font-family: 'Poppins', sans-serif;
+}
+
+header {
+  background: url('https://via.placeholder.com/1200x400') center/cover no-repeat;
+  color: white;
+  text-shadow: 1px 1px 3px black;
+}
+
+.card img {
+  border-radius: 8px;
+}
+
+footer {
+  position: relative;
+  bottom: 0;
+  width: 100%;
+}

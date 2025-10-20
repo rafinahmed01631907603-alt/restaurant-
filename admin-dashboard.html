@@ -1,0 +1,220 @@
+ <!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - My Restaurant</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  @media (max-width: 767px) {
+    table thead {display: none;}
+    table, table tbody, table tr, table td {display: block; width: 100%;}
+    table tr {margin-bottom: 1rem;}
+    table td {text-align: right; padding-left: 50%; position: relative;}
+    table td::before {position: absolute; left: 10px; width: 45%; white-space: nowrap; text-align: left; font-weight: bold;}
+    table td:nth-of-type(1)::before {content: "#";}
+    table td:nth-of-type(2)::before {content: "Customer Name";}
+    table td:nth-of-type(3)::before {content: "Item Ordered";}
+    table td:nth-of-type(4)::before {content: "Quantity";}
+    table td:nth-of-type(5)::before {content: "Total";}
+    table td:nth-of-type(6)::before {content: "Status";}
+    table td:nth-of-type(7)::before {content: "Action";}
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">🍽 My Restaurant</a>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <h2 class="text-center mb-4">Admin Dashboard - Orders</h2>
+
+  <!-- Controls: Add / Search / Filter / Sort -->
+  <div class="row mb-3 g-2">
+    <div class="col-md-3 text-end">
+      <button class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#addOrderModal">Add New Order</button>
+    </div>
+    <div class="col-md-3">
+      <input type="text" id="searchInput" class="form-control" placeholder="Search Customer/Item">
+    </div>
+    <div class="col-md-3">
+      <select id="statusFilter" class="form-select">
+        <option value="All">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Completed">Completed</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select id="sortSelect" class="form-select">
+        <option value="">Sort By</option>
+        <option value="totalAsc">Total Asc</option>
+        <option value="totalDesc">Total Desc</option>
+        <option value="qtyAsc">Quantity Asc</option>
+        <option value="qtyDesc">Quantity Desc</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle" id="ordersTable">
+      <thead class="table-dark">
+        <tr>
+          <th>#</th>
+          <th>Customer Name</th>
+          <th>Item Ordered</th>
+          <th>Quantity</th>
+          <th>Total (৳)</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Orders appear here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <nav>
+    <ul class="pagination justify-content-center" id="pagination"></ul>
+  </nav>
+</div>
+
+<!-- Modal for Adding Order -->
+<div class="modal fade" id="addOrderModal" tabindex="-1" aria-labelledby="addOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="modalForm">
+          <div class="mb-3">
+            <label>Customer Name</label>
+            <input type="text" class="form-control" id="modalName">
+          </div>
+          <div class="mb-3">
+            <label>Item Ordered</label>
+            <input type="text" class="form-control" id="modalItem">
+          </div>
+          <div class="mb-3">
+            <label>Quantity</label>
+            <input type="number" class="form-control" id="modalQty">
+          </div>
+          <div class="mb-3">
+            <label>Total (৳)</label>
+            <input type="number" class="form-control" id="modalTotal">
+          </div>
+          <button type="submit" class="btn btn-success w-100">Add Order</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="bg-dark text-white text-center py-3">
+  <p>&copy; kaif69 -2025 | All Rights Reserved</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let orders = JSON.parse(localStorage.getItem('orders')) || [];
+let currentPage = 1;
+const rowsPerPage = 5;
+
+function saveOrders(){ localStorage.setItem('orders', JSON.stringify(orders)); }
+
+function renderOrders(){
+    const tbody = document.querySelector('#ordersTable tbody');
+    tbody.innerHTML = "";
+
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const sortOption = document.getElementById('sortSelect').value;
+
+    let filteredOrders = [...orders];
+
+    if(search) filteredOrders = filteredOrders.filter(o => o.name.toLowerCase().includes(search) || o.item.toLowerCase().includes(search));
+    if(statusFilter !== "All") filteredOrders = filteredOrders.filter(o => o.status===statusFilter);
+    if(sortOption){
+        if(sortOption==="totalAsc") filteredOrders.sort((a,b)=>a.total-b.total);
+        if(sortOption==="totalDesc") filteredOrders.sort((a,b)=>b.total-a.total);
+        if(sortOption==="qtyAsc") filteredOrders.sort((a,b)=>a.qty-b.qty);
+        if(sortOption==="qtyDesc") filteredOrders.sort((a,b)=>b.qty-a.qty);
+    }
+
+    const start = (currentPage-1)*rowsPerPage;
+    const paginatedOrders = filteredOrders.slice(start, start+rowsPerPage);
+
+    paginatedOrders.forEach((order,index)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${start+index+1}</td>
+            <td>${order.name}</td>
+            <td>${order.item}</td>
+            <td>${order.qty}</td>
+            <td>${order.total}</td>
+            <td><span class="badge ${order.status==='Pending'?'bg-warning':'bg-success'}">${order.status}</span></td>
+            <td>
+                ${order.status==='Pending'?`
+                <button class="btn btn-success btn-sm" onclick="updateStatus(${orders.indexOf(order)})">Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteOrder(${orders.indexOf(order)})">Cancel</button>`:
+                `<button class="btn btn-secondary btn-sm" disabled>Done</button>`}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    renderPagination(filteredOrders.length);
+}
+
+function renderPagination(totalItems){
+    const pageCount = Math.ceil(totalItems/rowsPerPage);
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = "";
+
+    for(let i=1;i<=pageCount;i++){
+        const li = document.createElement('li');
+        li.className = `page-item ${i===currentPage?'active':''}`;
+        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+        li.addEventListener('click', function(e){
+            e.preventDefault();
+            currentPage=i;
+            renderOrders();
+        });
+        pagination.appendChild(li);
+    }
+}
+
+function updateStatus(index){ orders[index].status="Completed"; saveOrders(); renderOrders(); }
+function deleteOrder(index){ if(confirm("Are you sure?")){ orders.splice(index,1); saveOrders(); renderOrders(); } }
+
+document.getElementById('modalForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    const name=document.getElementById('modalName').value;
+    const item=document.getElementById('modalItem').value;
+    const qty=parseInt(document.getElementById('modalQty').value);
+    const total=parseFloat(document.getElementById('modalTotal').value);
+
+    if(!name||!item||!qty||!total){ alert("Please fill all fields!"); return; }
+    orders.push({name,item,qty,total,status:"Pending"}); saveOrders(); renderOrders();
+
+    document.getElementById('modalForm').reset();
+    const modal=bootstrap.Modal.getInstance(document.getElementById('addOrderModal')); modal.hide();
+});
+
+document.getElementById('searchInput').addEventListener('input',()=>{ currentPage=1; renderOrders(); });
+document.getElementById('statusFilter').addEventListener('change',()=>{ currentPage=1; renderOrders(); });
+document.getElementById('sortSelect').addEventListener('change',()=>{ renderOrders(); });
+
+renderOrders();
+</script>
+</body>
+</html>

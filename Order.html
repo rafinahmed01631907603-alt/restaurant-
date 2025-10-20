@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - My Restaurant</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="index.html">🍽 My Restaurant</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="menu.html">Menu</a></li>
+        <li class="nav-item"><a class="nav-link" href="contact.html">Contact</a></li>
+        <li class="nav-item"><a class="nav-link" href="Order.html">Order</a></li>
+         <li class="nav-item"><a class="nav-link" href="Admin Dashboard - Orders.html">Admin Dashboard</a></li>
+         <li class="nav-item"><a class="nav-link" href="admin-login.html">Login</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="container py-5">
+  <h2 class="text-center mb-4">Admin Dashboard - Orders</h2>
+
+  <!-- Add New Order Button -->
+  <div class="text-end mb-3">
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addOrderModal">Add New Order</button>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle" id="ordersTable">
+      <thead class="table-dark">
+        <tr>
+          <th>#</th>
+          <th>Customer Name</th>
+          <th>Item Ordered</th>
+          <th>Quantity</th>
+          <th>Total (৳)</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Orders will appear here -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal for Adding Order -->
+<div class="modal fade" id="addOrderModal" tabindex="-1" aria-labelledby="addOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="modalForm">
+          <div class="mb-3">
+            <label>Customer Name</label>
+            <input type="text" class="form-control" id="modalName">
+          </div>
+          <div class="mb-3">
+            <label>Item Ordered</label>
+            <input type="text" class="form-control" id="modalItem">
+          </div>
+          <div class="mb-3">
+            <label>Quantity</label>
+            <input type="number" class="form-control" id="modalQty">
+          </div>
+          <div class="mb-3">
+            <label>Total (৳)</label>
+            <input type="number" class="form-control" id="modalTotal">
+          </div>
+          <button type="submit" class="btn btn-success w-100">Add Order</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="bg-dark text-white text-center py-3">
+ <p>&copy; kaif69 -2025 | All Rights Reserved</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+function saveOrders(){
+    localStorage.setItem('orders', JSON.stringify(orders));
+}
+
+function renderOrders(){
+    const tbody = document.querySelector('#ordersTable tbody');
+    tbody.innerHTML = "";
+    orders.forEach((order, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${index+1}</td>
+            <td>${order.name}</td>
+            <td>${order.item}</td>
+            <td>${order.qty}</td>
+            <td>${order.total}</td>
+            <td><span class="badge ${order.status==='Pending'?'bg-warning':'bg-success'}">${order.status}</span></td>
+            <td>
+                ${order.status==='Pending'?`
+                <button class="btn btn-success btn-sm" onclick="updateStatus(${index})">Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteOrder(${index})">Cancel</button>`:
+                `<button class="btn btn-secondary btn-sm" disabled>Done</button>`}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function updateStatus(index){
+    orders[index].status = "Completed";
+    saveOrders();
+    renderOrders();
+}
+
+function deleteOrder(index){
+    if(confirm("Are you sure to delete this order?")){
+        orders.splice(index,1);
+        saveOrders();
+        renderOrders();
+    }
+}
+
+document.getElementById('modalForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const name = document.getElementById('modalName').value;
+    const item = document.getElementById('modalItem').value;
+    const qty = document.getElementById('modalQty').value;
+    const total = document.getElementById('modalTotal').value;
+
+    if(!name || !item || !qty || !total){
+        alert("Please fill all fields!");
+        return;
+    }
+
+    orders.push({name, item, qty, total, status:"Pending"});
+    saveOrders();
+    renderOrders();
+
+    // Clear form & close modal
+    document.getElementById('modalForm').reset();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('addOrderModal'));
+    modal.hide();
+});
+
+renderOrders();
+</script>
+
+</body>
+</html>
